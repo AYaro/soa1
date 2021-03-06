@@ -10,8 +10,8 @@ import java.util.*;
 public class Store {
 
     static final String DB_URL = "jdbc:postgresql://pg:5432/studs";
-    static final String USER = "s242297";
-    static final String PASS = "dyv175";
+    static final String USER = "username";
+    static final String PASS = "password";
 
     public static Connection getConnection() throws SQLException {
         try {
@@ -174,13 +174,10 @@ public class Store {
         rs.close();
         connection.close();
 
-        System.out.println("got res id");
-
         return flat;
     }
 
     public static Flat updateFlat(Connection connection, Flat flat) throws SQLException {
-        System.out.println("updaying");
         PreparedStatement update = connection.prepareStatement
                 ("UPDATE flat SET name = ?, coordinate_x = ?, coordinate_y = ?, " +
                         "area = ?, number_of_rooms = ?, height = ?, furnish = ?, transport = ?, " +
@@ -192,9 +189,6 @@ public class Store {
         update.setInt(4, flat.getArea());
         update.setInt(5, flat.getNumberOfRooms());
         update.setInt(6, flat.getHeight());
-        System.out.println(flat.getArea());
-        System.out.println(flat.getHeight());
-        System.out.println(flat.getFurnish().getName());
         update.setString(7, flat.getFurnish().getName());
         update.setString(8, flat.getTransport().getName());
 
@@ -205,7 +199,6 @@ public class Store {
 
         update.setLong(12, flat.getId());
 
-        System.out.println(update.toString());
         update.executeUpdate();
         update.close();
 
@@ -341,5 +334,45 @@ public class Store {
         connection.close();
         return flats;
     }
+
+    public static int CountHouse(Connection connection, String name, Long year, int numberOfLifts) throws SQLException {
+        PreparedStatement find = connection.prepareStatement("SELECT count(*) FROM flat WHERE house_name = ? AND year = ? AND number_of_lifts = ?");
+        find.setString(1, name);
+        find.setLong(2, year);
+        find.setInt(3, numberOfLifts);
+
+
+        ResultSet rs = find.executeQuery();
+        rs.next();
+        int count = rs.getInt("count");
+        rs.close();
+        connection.close();
+        return count;
+    }
+
+    public static void DeleteOneByRoom(Connection connection, int numberOfRooms) throws SQLException {
+        PreparedStatement del = connection.prepareStatement("DELETE FROM flat WHERE id IN (SELECT id FROM flat WHERE number_of_rooms = ? LIMIT 1)");
+        del.setInt(1, numberOfRooms);
+        del.executeUpdate();
+        del.close();
+        connection.close();
+    }
+
+    public static int CountWhereMore(Connection connection, String transport) throws SQLException {
+        PreparedStatement find = connection.prepareStatement("SELECT count(*) FROM flat WHERE transport > ?");
+        find.setString(1, transport);
+
+
+        ResultSet rs = find.executeQuery();
+        rs.next();
+        int count = rs.getInt("count");
+        rs.close();
+        connection.close();
+        return count;
+    }
+
+
+
+
 
 }

@@ -25,6 +25,9 @@ public class Service {
         String houseName = parameters.get("houseName")[0];
         Integer year = Integer.parseInt(parameters.get("year")[0]);
         int numberOfLifts = Integer.parseInt(parameters.get("numberOfLifts")[0]);
+        if (area <= 0 || year <= 0 || numberOfRooms <= 0 || height <= 0 || numberOfLifts <= 0 || x <= -484){
+            throw new NumberFormatException();
+        }
         return new Flat(name, x, y, creationDate, area, numberOfRooms,
                 height, furnishType, transportType, houseName, year, numberOfLifts);
     }
@@ -72,6 +75,18 @@ public class Service {
     public static Flat addFlat(Flat flat) throws SQLException {
         Store.addFlat(Objects.requireNonNull(Store.getConnection()), flat);
         return flat;
+    }
+
+    public static int countFlatsByHouse(String name, Long year, int numberOfLifts) throws SQLException {
+        return Store.CountHouse(Store.getConnection(), name, year, numberOfLifts);
+    }
+
+    public static int countFlatsByTransport(String transport) throws SQLException {
+        return Store.CountWhereMore(Store.getConnection(), transport);
+    }
+
+    public static void deleteOneByRoom(int numberOfRooms) throws SQLException {
+        Store.DeleteOneByRoom(Store.getConnection(), numberOfRooms);
     }
 
     public static Flat getFlatById(long id) throws SQLException {
