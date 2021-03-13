@@ -158,7 +158,11 @@ public class Store {
         add.setString(8, flat.getTransport().toString());
 
         House house = flat.getHouse();
-        add.setString(9, house.getName());
+        if (house.getName() == null) {
+            add.setNull(9, Types.VARCHAR);
+        } else {
+            add.setString(9, house.getName());
+        }
         add.setInt(10, house.getYear());
         add.setInt(11, house.getNumberOfLifts());
 

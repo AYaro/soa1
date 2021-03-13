@@ -22,7 +22,10 @@ public class Service {
         Integer height = Integer.parseInt(parameters.get("height"));
         String furnishType = parameters.get("furnish");
         String transportType = parameters.get("transport");
-        String houseName = parameters.get("houseName");
+        String houseName = null;
+        if (parameters.get("houseName") != null) {
+            houseName = parameters.get("houseName");
+        }
         Integer year = Integer.parseInt(parameters.get("year"));
         int numberOfLifts = Integer.parseInt(parameters.get("numberOfLifts"));
         if (area <= 0 || year <= 0 || numberOfRooms <= 0 || height <= 0 || numberOfLifts <= 0 || x <= -484){
