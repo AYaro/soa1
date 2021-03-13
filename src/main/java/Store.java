@@ -237,6 +237,7 @@ public class Store {
 
     public static ArrayList<Flat> getFlats(Connection connection, String[] filterFields, String[] filterValues,
                                              String[] sortFields, int offset, int limit) throws SQLException {
+        System.out.println(filterFields.length);
         List<String> filterFieldsList = Arrays.asList(filterFields);
         StringBuilder selectBuilder = new StringBuilder("SELECT * FROM flat ");
         if (!filterFieldsList.isEmpty()) {
@@ -250,6 +251,7 @@ public class Store {
             selectBuilder.replace(selectBuilder.lastIndexOf("and"), selectBuilder.lastIndexOf("and") + 3, "");
         }
 
+        System.out.println(sortFields.length);
         if (sortFields.length != 0) {
             selectBuilder.append(" ORDER BY ");
             for (String field : sortFields) {
@@ -301,17 +303,16 @@ public class Store {
                     Integer.parseInt(filterValues[filterFieldsList.indexOf("numberOfRooms")]));
         }
         if (filterFieldsList.contains("height")) {
-            System.out.println("got heigth");
             preparedStatement.setLong(filterFieldsList.indexOf("height") + 1,
                     Long.parseLong(filterValues[filterFieldsList.indexOf("height")]));
         }
         if (filterFieldsList.contains("furnish")) {
             preparedStatement.setString(filterFieldsList.indexOf("furnish") + 1,
-                    filterValues[filterFieldsList.indexOf("furnish")]);
+                    filterValues[filterFieldsList.indexOf("furnish")].toUpperCase());
         }
         if (filterFieldsList.contains("transport")) {
             preparedStatement.setString(filterFieldsList.indexOf("transport") + 1,
-                    filterValues[filterFieldsList.indexOf("transport")]);
+                    filterValues[filterFieldsList.indexOf("transport")].toUpperCase());
         }
         if (filterFieldsList.contains("houseName")) {
             preparedStatement.setString(filterFieldsList.indexOf("houseName") + 1,

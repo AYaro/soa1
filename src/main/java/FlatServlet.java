@@ -1,6 +1,7 @@
 
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import models.Flat;
 import models.Furnish;
 import models.Transport;
@@ -12,13 +13,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
+import java.lang.reflect.Type;
 import java.sql.SQLException;;
 import java.text.ParseException;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FlatServlet extends HttpServlet {
     private static final String SERVLET_PATH_FLATS = "/flats";
@@ -62,12 +67,12 @@ public class FlatServlet extends HttpServlet {
                         int limit = (limitStr == null || limitStr.isEmpty()) ? -1 : Integer.parseInt(limitStr);
                         if (offset != -1) count++;
                         if (limit != -1) count++;
-                        if (request.getParameter("sort") != null && !request.getParameter("sort").isEmpty()) count++ ;
-                        String[] filterFields = new String[request.getParameterMap().size()-count];
-                        String[] filterValues = new String[request.getParameterMap().size()-count];
+                        if (request.getParameter("sort") != null) count++;
+                        String[] filterFields = new String[request.getParameterMap().size() - count];
+                        String[] filterValues = new String[request.getParameterMap().size() - count];
                         int i = 0;
                         for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-                            if (!entry.getKey().equals("offset") && !entry.getKey().equals("limit") && !entry.getKey().equals("sort")){
+                            if (!entry.getKey().equals("offset") && !entry.getKey().equals("limit") && !entry.getKey().equals("sort")) {
                                 filterFields[i] = entry.getKey();
                                 filterValues[i] = entry.getValue()[0];
                                 i++;
@@ -81,12 +86,30 @@ public class FlatServlet extends HttpServlet {
                                 sortFields, limit, offset);
                         if (flatsResult.isEmpty()) {
                             writer.append("[]");
+                            return;
                         } else {
                             writer.append(gson.toJson(flatsResult));
+                            return;
                         }
                     } else {
                         response.sendError(422);
+                        return;
                     }
+                }
+            } else if (checkUrl(path)) {
+                if (request.getParameterMap().size() == 0) {
+                    long id = Long.parseLong(path.substring(path.lastIndexOf(SERVLET_PATH_FLATS)
+                            + SERVLET_PATH_FLATS.length() + 1));
+                    Flat flat = Service.getFlatById(id);
+                    if (flat == null) {
+                        response.sendError(404);
+                        return;
+                    }
+                    writer.append(gson.toJson(flat));
+                    return;
+                } else {
+                    response.sendError(400);
+                    return;
                 }
             } else if (path.equals(SERVLET_PATH_COUNT_HOUSE)){
                 if (request.getParameterMap().size() != 3) {
@@ -97,7 +120,7 @@ public class FlatServlet extends HttpServlet {
                 int numberOfLifts = Integer.parseInt(request.getParameter("numberOfLifts"));
                 String name = request.getParameter("name");
                 int count = Service.countFlatsByHouse(name, year, numberOfLifts);
-                writer.append("{count:" + count + "}");
+                writer.append("{\"count\":" + count + "}");
             } else if (path.equals(SERVLET_PATH_COUNT_TRANSPORT)){
                 if (request.getParameterMap().size() != 1) {
                     response.sendError(422);
@@ -105,8 +128,12 @@ public class FlatServlet extends HttpServlet {
                 }
                 String transport = request.getParameter("transport");
                 int count = Service.countFlatsByTransport(transport);
-                writer.append("{count:" + count + "}");
+                writer.append("{\"count\":" + count + "}");
+            } else if (path.equals(SERVLET_PATH_DELETE_BY_ROOM)) {
+                response.sendError(405);
+                return;
             }
+            response.sendError(404);
         } catch (NumberFormatException e) {
             System.out.println(e.getMessage());
             response.sendError(422, e.getMessage());
@@ -122,22 +149,32 @@ public class FlatServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter writer = response.getWriter();
         Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").create();
-
         try {
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            String body = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+            Map<String, String> paramMap = gson.fromJson(body, type);
             if (path.equals(SERVLET_PATH_DELETE_BY_ROOM)){
-                if (request.getParameterMap().size() != 1) {
+                if (paramMap.size() != 1) {
                     response.sendError(422);
                 }
-                int numberOfRooms = Integer.parseInt(request.getParameter("numberOfRooms"));
+                int numberOfRooms = Integer.parseInt(paramMap.get("numberOfRooms"));
                 Service.deleteOneByRoom(numberOfRooms);
                 writer.append("OK");
-            } else {
-                java.util.Map<String, String[]> map = request.getParameterMap();
-                Flat flat = Service.makeFlatFromParams(map);
+                return;
+            } else if (path.equals(SERVLET_PATH_FLATS)) {
+                Flat flat = Service.makeFlatFromParams(paramMap);
                 flat = Service.addFlat(flat);
                 String jsonString = gson.toJson(flat);
                 writer.append(jsonString);
+                return;
+            } else if (path.equals(SERVLET_PATH_COUNT_HOUSE) || path.equals(SERVLET_PATH_COUNT_TRANSPORT))  {
+                response.sendError(405);
+                return;
             }
+            response.sendError(404);
+        } catch (NumberFormatException | ParseException | JsonSyntaxException e) {
+            System.out.println(e.getMessage());
+            response.sendError(422, e.getMessage());
         } catch (Exception e) {
             System.out.println(e.getMessage());
             response.sendError(500, e.getMessage());
@@ -148,6 +185,8 @@ public class FlatServlet extends HttpServlet {
     private static boolean checkParams(Map<String, String[]> params, Boolean isGet) {
         try {
             for (Map.Entry<String, String[]> param : params.entrySet()) {
+                System.out.println(param.getKey());
+                System.out.println(param.getValue()[0]);
                 switch (param.getKey()) {
                     case "offset":
                     case "limit":
@@ -182,7 +221,6 @@ public class FlatServlet extends HttpServlet {
                         break;
                     case "coordinateY":
                     case "creationDate":
-                        LocalDateTime creationDate = LocalDateTime.parse(param.getValue()[0]);
                         break;
                     case "name":
                         break;
@@ -207,28 +245,32 @@ public class FlatServlet extends HttpServlet {
         gsonBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer());
         gsonBuilder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer());
         Gson gson = gsonBuilder.setPrettyPrinting().create();
+        Type type = new TypeToken<Map<String, String>>(){}.getType();
+        String body = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+        Map<String, String> paramMap = gson.fromJson(body, type);
 
         if (checkUrl(path)) {
             response.setContentType("application/json;charset=UTF-8");
             PrintWriter writer = response.getWriter();
 
             try {
-                if (hasRedundantParameters(request.getParameterMap().keySet()) ||
-                        !hasAllRequiredParameters(request.getParameterMap().keySet()) ||
-                        !validateFields(request.getParameterMap())) {
+                if (hasRedundantParameters(paramMap.keySet()) ||
+                        !hasAllRequiredParameters(paramMap.keySet()) ||
+                        !validateFields(paramMap)) {
                     response.sendError(422);
                 } else {
                     long id = Long.parseLong(path.substring(path.lastIndexOf(SERVLET_PATH_FLATS)
                             + SERVLET_PATH_FLATS.length() + 1));
                     Flat flat = Service.getFlatById(id);
                     if (flat != null) {
-                        flat = Service.updateFlatFromParams(request.getParameterMap(), flat);
+                        flat = Service.updateFlatFromParams(paramMap, flat);
                         flat = Service.updateFlat(id, flat);
                         if (flat.getCreationDate() != null) {
                             writer.append(gson.toJson(flat));
                         }
                     } else {
                         writer.append("[]");
+                        return;
                     }
                 }
             } catch (NumberFormatException | ParseException e) {
@@ -249,17 +291,17 @@ public class FlatServlet extends HttpServlet {
         return m.matches();
     }
 
-    private static boolean validateFields(Map<String, String[]> params){
+    private static boolean validateFields(Map<String, String> params){
         try {
-            boolean res = Long.parseLong(params.get("coordinateX")[0]) > -484 &&
-                    (params.get("height") == null || Long.parseLong(params.get("height")[0]) > 0) &&
-                    Integer.parseInt(params.get("numberOfRooms")[0]) > 0 &&
-                    Integer.parseInt(params.get("area")[0]) > 0 &&
-                    params.get("name") != null && !params.get("name")[0].isEmpty() &&
-                    Furnish.getByName(params.get("furnish")[0]) != null &&
-                    Transport.getByName(params.get("transport")[0]) != null &&
-                    (params.get("year")[0]) != null;
-                    Double.parseDouble(params.get("coordinateY")[0]);
+            boolean res = Long.parseLong(params.get("coordinateX")) > -484 &&
+                    (params.get("height") == null || Long.parseLong(params.get("height")) > 0) &&
+                    Integer.parseInt(params.get("numberOfRooms")) > 0 &&
+                    Integer.parseInt(params.get("area")) > 0 &&
+                    params.get("name") != null && !params.get("name").isEmpty() &&
+                    Furnish.getByName(params.get("furnish")) != null &&
+                    Transport.getByName(params.get("transport")) != null &&
+                    (params.get("year")) != null;
+                    Double.parseDouble(params.get("coordinateY"));
             return res;
         } catch (Exception e) {
             System.out.println(e);
@@ -284,6 +326,8 @@ public class FlatServlet extends HttpServlet {
                     System.out.println(e.getMessage());
                     response.sendError(500, e.getMessage());
                 }
+            } else if (path.equals(SERVLET_PATH_COUNT_HOUSE) || path.equals(SERVLET_PATH_COUNT_TRANSPORT) || path.equals(SERVLET_PATH_DELETE_BY_ROOM))  {
+                response.sendError(405);
             } else {
                 response.sendError(400);
             }

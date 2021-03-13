@@ -11,20 +11,20 @@ import java.util.Objects;
 
 
 public class Service {
-    public static Flat makeFlatFromParams(Map<String, String[]> parameters)
+    public static Flat makeFlatFromParams(Map<String, String> parameters)
             throws ParseException, NumberFormatException {
-        String name = parameters.get("name")[0];
-        Long x = Long.parseLong(parameters.get("coordinateX")[0]);
-        Double y = Double.parseDouble(parameters.get("coordinateY")[0]);
+        String name = parameters.get("name");
+        Long x = Long.parseLong(parameters.get("coordinateX"));
+        Double y = Double.parseDouble(parameters.get("coordinateY"));
         LocalDateTime creationDate = LocalDateTime.now();
-        Integer area = Integer.parseInt(parameters.get("area")[0]);
-        int numberOfRooms = Integer.parseInt(parameters.get("numberOfRooms")[0]);
-        Integer height = Integer.parseInt(parameters.get("height")[0]);
-        String furnishType = parameters.get("furnish")[0];
-        String transportType = parameters.get("transport")[0];
-        String houseName = parameters.get("houseName")[0];
-        Integer year = Integer.parseInt(parameters.get("year")[0]);
-        int numberOfLifts = Integer.parseInt(parameters.get("numberOfLifts")[0]);
+        Integer area = Integer.parseInt(parameters.get("area"));
+        int numberOfRooms = Integer.parseInt(parameters.get("numberOfRooms"));
+        Integer height = Integer.parseInt(parameters.get("height"));
+        String furnishType = parameters.get("furnish");
+        String transportType = parameters.get("transport");
+        String houseName = parameters.get("houseName");
+        Integer year = Integer.parseInt(parameters.get("year"));
+        int numberOfLifts = Integer.parseInt(parameters.get("numberOfLifts"));
         if (area <= 0 || year <= 0 || numberOfRooms <= 0 || height <= 0 || numberOfLifts <= 0 || x <= -484){
             throw new NumberFormatException();
         }
@@ -32,41 +32,41 @@ public class Service {
                 height, furnishType, transportType, houseName, year, numberOfLifts);
     }
 
-    public static Flat updateFlatFromParams(Map<String, String[]> parameters, Flat flat)
+    public static Flat updateFlatFromParams(Map<String, String> parameters, Flat flat)
             throws ParseException, NumberFormatException {
         if (parameters.get("name") != null) {
-            flat.setName(parameters.get("name")[0]);
+            flat.setName(parameters.get("name"));
         }
         if (parameters.get("coordinateX") != null) {
-            flat.setCoordinateX(Long.parseLong(parameters.get("coordinateX")[0]));
+            flat.setCoordinateX(Long.parseLong(parameters.get("coordinateX")));
         }
         if (parameters.get("coordinateY") != null) {
-            flat.setCoordinateY(parameters.get("coordinateY")[0].isEmpty() ? 0
-                    : Double.parseDouble(parameters.get("coordinateY")[0]));
+            flat.setCoordinateY(parameters.get("coordinateY").isEmpty() ? 0
+                    : Double.parseDouble(parameters.get("coordinateY")));
         }
         if (parameters.get("area") != null) {
-            flat.setArea(Integer.parseInt(parameters.get("area")[0]));
+            flat.setArea(Integer.parseInt(parameters.get("area")));
         }
         if (parameters.get("numberOfRooms") != null) {
-            flat.setNumberOfRooms(Integer.parseInt(parameters.get("numberOfRooms")[0]));
+            flat.setNumberOfRooms(Integer.parseInt(parameters.get("numberOfRooms")));
         }
         if (parameters.get("height") != null) {
-            flat.setHeight(Integer.parseInt(parameters.get("height")[0]));
+            flat.setHeight(Integer.parseInt(parameters.get("height")));
         }
         if (parameters.get("furnishType") != null) {
-            flat.setFurnish(Furnish.getByName(parameters.get("furnishType")[0]));
+            flat.setFurnish(Furnish.getByName(parameters.get("furnishType")));
         }
         if (parameters.get("transportType") != null) {
-            flat.setTransport(Transport.getByName(parameters.get("transportType")[0]));
+            flat.setTransport(Transport.getByName(parameters.get("transportType")));
         }
         if (parameters.get("houseName") != null) {
-            flat.setHouseName(parameters.get("houseName")[0]);
+            flat.setHouseName(parameters.get("houseName"));
         }
         if (parameters.get("year") != null) {
-            flat.setHouseYear(Integer.parseInt(parameters.get("year")[0]));
+            flat.setHouseYear(Integer.parseInt(parameters.get("year")));
         }
         if (parameters.get("numberOfLifts") != null) {
-            flat.setHouseYear(Integer.parseInt(parameters.get("numberOfLifts")[0]));
+            flat.setHouseYear(Integer.parseInt(parameters.get("numberOfLifts")));
         }
         return flat;
     }
