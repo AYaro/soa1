@@ -121,6 +121,7 @@ public class FlatServlet extends HttpServlet {
                 String name = request.getParameter("name");
                 int count = Service.countFlatsByHouse(name, year, numberOfLifts);
                 writer.append("{\"count\":" + count + "}");
+                return;
             } else if (path.equals(SERVLET_PATH_COUNT_TRANSPORT)){
                 if (request.getParameterMap().size() != 1) {
                     response.sendError(422);
@@ -129,6 +130,7 @@ public class FlatServlet extends HttpServlet {
                 String transport = request.getParameter("transport");
                 int count = Service.countFlatsByTransport(transport);
                 writer.append("{\"count\":" + count + "}");
+                return;
             } else if (path.equals(SERVLET_PATH_DELETE_BY_ROOM)) {
                 response.sendError(405);
                 return;
@@ -252,12 +254,17 @@ public class FlatServlet extends HttpServlet {
         if (checkUrl(path)) {
             response.setContentType("application/json;charset=UTF-8");
             PrintWriter writer = response.getWriter();
-
+            System.out.println(paramMap);
             try {
+                if (request.getParameterMap().size() != 0) {
+                    response.sendError(422);
+                    return;
+                }
                 if (hasRedundantParameters(paramMap.keySet()) ||
                         !hasAllRequiredParameters(paramMap.keySet()) ||
                         !validateFields(paramMap)) {
                     response.sendError(422);
+                    return;
                 } else {
                     long id = Long.parseLong(path.substring(path.lastIndexOf(SERVLET_PATH_FLATS)
                             + SERVLET_PATH_FLATS.length() + 1));

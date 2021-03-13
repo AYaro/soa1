@@ -62,6 +62,9 @@ public class Service {
         if (parameters.get("houseName") != null) {
             flat.setHouseName(parameters.get("houseName"));
         }
+        if (parameters.get("houseName") == null) {
+            flat.setHouseName(null);
+        }
         if (parameters.get("year") != null) {
             flat.setHouseYear(Integer.parseInt(parameters.get("year")));
         }

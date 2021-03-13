@@ -9,7 +9,7 @@ import java.util.*;
 
 public class Store {
 
-    static final String DB_URL = "jdbc:postgresql://pg:5432/studs";
+    static final String DB_URL = "jdbc:postgresql://localhost:5432/studs";
     static final String USER = "username";
     static final String PASS = "password";
 
@@ -193,7 +193,11 @@ public class Store {
         update.setString(8, flat.getTransport().getName());
 
         House house = flat.getHouse();
-        update.setString(9, house.getName());
+        if (house.getName() == null) {
+            update.setNull(9, Types.VARCHAR);
+        } else {
+            update.setString(9, house.getName());
+        }
         update.setInt(10, house.getYear());
         update.setInt(11, house.getNumberOfLifts());
 
